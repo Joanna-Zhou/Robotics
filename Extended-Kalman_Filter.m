@@ -1,4 +1,4 @@
-%% Part c) d) Extended Kalman Filter with r = 1, 2.5, 10
+%% Extended Kalman Filter with uniform distribution parameter r = 1, 2.5, 10
 
 clc
 clear all
