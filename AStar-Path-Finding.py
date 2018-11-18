@@ -101,7 +101,7 @@ class AStar(object):
             '''
             print 'Current node:', nodeCurr.position
             print 'Open queue:', [node.position for f,node in self.openQ]
-            print 'Closed list:', [node.position for f,node in self.closedList]
+            print 'Closed list:', [node.position for node in self.closedList]
             '''
             # Check if the end node is reached
             if self.foundPath(nodeCurr) == True:
@@ -172,17 +172,11 @@ class AStar(object):
             Check if the current node is the end node and retrieve the path if it is
         """
         if node == self.nodeEnd: # End goal is reached
-            pathLength = 0
             child = node
-            x, y = self.nodeEnd.x, self.nodeEnd.y
+            pathLength = node.g
             while child is not None:
                 self.path.append(child.position)
-                if x == child.x or y == child.y:
-                    pathLength += 1
-                else:
-                    pathLength += math.sqrt(2)
-                x, y = child.x, child.y
-                self.maze.maze[x, y] = 2 # For printing purpose only
+                self.maze.maze[child.x, child.y] = 2 # For printing purpose only
                 child = child.parent # Retrieve backwards
 
             self.path = self.path[::-1] # Reverse the path
