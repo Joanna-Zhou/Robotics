@@ -1,0 +1,17 @@
+from solution import *
+from search import * #for search engines
+from sokoban import SokobanState, Direction, PROBLEMS #for Sokoban specific classes and problems
+
+def main():
+    ss = SokobanState("START", 0, None, 6, 6, # dimensions
+                 ((5, 5), (5, 4), (4, 5)), #robots
+                 frozenset(((3, 1), (2, 2), (1, 4), (3, 4))), #boxes
+                 frozenset(((0, 1), (0, 0), (1, 0), (1, 1))), #storage
+                 frozenset() #obstacles
+                 )
+    print(heur_manhattan_distance(ss))
+    return
+
+
+if __name__ == '__main__':
+    main()
