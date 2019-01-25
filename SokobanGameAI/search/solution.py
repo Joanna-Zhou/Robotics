@@ -100,12 +100,12 @@ def anytime_weighted_astar(initial_state, heur_fn, weight=1., timebound = 10):
   '''INPUT: a sokoban state that represents the start state and a timebound (number of seconds)'''
   '''OUTPUT: A goal state (if a goal is found), else False'''
   '''implementation of weighted astar algorithm'''
+  se = SearchEngine('astar', 'full') # astar data structure to store the frontier, with full cycle checking
+
   return False
 
 def anytime_gbfs(initial_state, heur_fn, timebound = 10):
-#IMPLEMENT
-  '''Provides an implementation of anytime greedy best-first search, as described in the HW1 handout'''
-  '''INPUT: a sokoban state that represents the start state and a timebound (number of seconds)'''
-  '''OUTPUT: A goal state (if a goal is found), else False'''
-  '''implementation of weighted astar algorithm'''
-  return False
+  se = SearchEngine('best_first', 'full')
+  se.init_search(initial_state, goal_fn=sokoban_goal_state, heur_fn=heur_alternate)
+  final = se.search(timebound)
+  return final

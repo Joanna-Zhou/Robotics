@@ -4,11 +4,11 @@ from solution import *
 from sokoban import sokoban_goal_state
 
 #Select what to test
-test_manhattan = True
-test_fval_function = True
+test_manhattan = False
+test_fval_function = False
 test_anytime_gbfs = True
-test_alternate = True
-test_anytime_weighted_astar = True
+test_alternate = False
+test_anytime_weighted_astar = False
 
 if test_manhattan:
     ##############################################################

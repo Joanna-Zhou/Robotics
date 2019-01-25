@@ -9,8 +9,61 @@ def main():
                  frozenset(((0, 1), (0, 0), (1, 0), (1, 1))), #storage
                  frozenset() #obstacles
                  )
+    ss.print_state()
     print(heur_manhattan_distance(ss))
     return
+
+
+##Temporary storage
+def anytime_gbfs(initial_state, heur_fn, timebound = 10):
+#IMPLEMENT
+  '''Provides an implementation of anytime greedy best-first search, as described in the HW1 handout'''
+  '''INPUT: a sokoban state that represents the start state and a timebound (number of seconds)'''
+  '''OUTPUT: A goal state (if a goal is found), else False'''
+  '''implementation of weighted astar algorithm'''
+    best_path_cost = float("inf")
+    time_remain = 8
+    iter = 0
+
+    se = SearchEngine('best_first', 'full')
+    se.init_search(initial_state, sokoban_goal_state, heur_fn)
+
+    while (time_remain > 0) and not se.open.empty():
+        iter += 1
+        t_start = os.times()[0]
+        print(t_start)
+
+        if iter == 1:
+            final = se.search(timebound)
+
+            try:
+                goalval = final.gval
+                time_remain = 8 - t_start
+                if goalval < best_path_cost:
+                    best_path_cost = goalval
+                    optimal_final = final
+
+            except: #when final = False
+                time_remain = 8 - t_start
+
+        else:
+            costbound = (best_path_cost, float('inf'), float('inf'))
+            final = se.search(timebound, costbound)
+
+            try:
+                goalval = final.gval
+                time_remain = 8 - t_start
+                if goalval < best_path_cost:
+                    best_path_cost = goalval
+                    optimal_final = final
+
+            except: #when final = False
+              time_remain = 8 - t_start
+
+    try:
+        return optimal_final
+    except:
+        return final
 
 
 if __name__ == '__main__':
