@@ -58,7 +58,7 @@ def heur_alternate(state):
     total_distances = []
     boxes, storages = list(state.boxes), list(state.storage)
     size = len(boxes)
-    box_permutations = itertools.permutations(range(0, size), size)
+    box_permutations = itertools.permutations(range(size), size)
     # Get a permutation of the orders each box can be paired with storages
     # Loop through them to find all the possible total distances
     # This way, each box will be only paired with one storage for the final value
@@ -69,7 +69,15 @@ def heur_alternate(state):
             total_distance += manhattan_distance(boxes[box_index], storages[storage_index])
         total_distances.append(total_distance)
     # Then find the smallest total distance of all
-    return min(total_distances)
+
+    # Get the total manhattan distance of each robot to its nearest box
+    robot_distance = 0
+    for robot in state.robots: # For each box, find its nearest storage location, which can be reused for other boxes
+        distances = [manhattan_distance(box, robot) for box in boxes]
+        robot_distance += min(distances)
+    return min(total_distances) + robot_distance
+
+
 
 def heur_zero(state):
     '''Zero Heuristic can be used to make A* search perform uniform cost search'''
@@ -96,16 +104,54 @@ def fval_function(sN, weight):
 
 def anytime_weighted_astar(initial_state, heur_fn, weight=1., timebound = 10):
 #IMPLEMENT
-  '''Provides an implementation of anytime weighted a-star, as described in the HW1 handout'''
-  '''INPUT: a sokoban state that represents the start state and a timebound (number of seconds)'''
-  '''OUTPUT: A goal state (if a goal is found), else False'''
-  '''implementation of weighted astar algorithm'''
-  se = SearchEngine('astar', 'full') # astar data structure to store the frontier, with full cycle checking
+    '''Provides an implementation of anytime weighted a-star, as described in the HW1 handout'''
+    '''INPUT: a sokoban state that represents the start state and a timebound (number of seconds)'''
+    '''OUTPUT: A goal state (if a goal is found), else False'''
+    '''implementation of weighted astar algorithm'''
+    se = SearchEngine('astar', 'full') # astar data structure to store the frontier, with full cycle checking
 
-  return False
+    return False
 
 def anytime_gbfs(initial_state, heur_fn, timebound = 10):
-  se = SearchEngine('best_first', 'full')
-  se.init_search(initial_state, goal_fn=sokoban_goal_state, heur_fn=heur_alternate)
-  final = se.search(timebound)
-  return final
+    se = SearchEngine('best_first', 'full')
+    se.init_search(initial_state, goal_fn=sokoban_goal_state, heur_fn=heur_alternate)
+    final = se.search(timebound)
+    return final
+
+def anytime_gbfs(initial_state, heur_fn, timebound = 10):
+    #IMPLEMENT
+    '''Provides an implementation of anytime greedy best-first search, as described in the HW1 handout'''
+    '''INPUT: a sokoban state that represents the start state and a timebound (number of seconds)'''
+    '''OUTPUT: A goal state (if a goal is found), else False'''
+    '''implementation of weighted astar algorithm'''
+    tic = os.times()[0]
+    time, iter = 0, 0
+
+    se = SearchEngine('best_first', 'full')
+    se.init_search(initial_state, goal_fn=sokoban_goal_state, heur_fn=heur_alternate)
+
+    try:
+        # Initiate the search results with the basic gbf
+        final = se.search(timebound)
+        gval = final.gval
+        toc = os.times()[0] - tic
+    except: # If even the basic one can't find a solution, no need to continue
+        return False
+    time += toc
+
+    while (time < timebound) and not se.open.empty():
+        tic = os.times()[0]
+        print('Round', iter, ':', time)
+        try:
+            costbound = (gval, float('inf'), float('inf')) # hval is not constraint, gval is constraint by the past optimal g
+            new_final = se.search(timebound, costbound)
+            new_gval = new_final.gval
+            if new_gval < gval:
+                final, gval = new_final, new_gval
+        except:
+            pass
+        toc = os.times()[0] - tic
+        time += toc
+        iter += 1
+
+    return final
