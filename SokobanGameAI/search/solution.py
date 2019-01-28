@@ -64,6 +64,9 @@ def heur_alternate(state):
     '''INPUT: a sokoban state'''
     '''OUTPUT: a numeric value that serves as an estimate of the distance of the state to the goal.'''
 
+    if state == False:
+        return float('inf')
+
     global pass_box_distance
     if state.parent == None: # Initiate the pass_heuristics dictionary when it's the first node expanded
         pass_box_distance = {}
@@ -196,7 +199,7 @@ def anytime_weighted_astar(initial_state, heur_fn, weight=1., timebound = 10):
         else:
             weight /= 4
         try:
-            costbound = (gval, float('inf'), float('inf')) # hval is not constraint, gval is constraint by the past optimal g
+            costbound = (gval, float('inf'), gval + heur_fn(final)) # hval is not constraint, gval is constraint by the past optimal g
             new_sol = se.search(timebound-time, costbound)
             new_gval = new_sol.gval
             if new_gval < gval:
@@ -234,7 +237,7 @@ def anytime_gbfs(initial_state, heur_fn, timebound = 10):
     while time < timebound and not se.open.empty():
         tic = os.times()[0]
         try:
-            costbound = (gval, float('inf'), float('inf')) # hval is not constraint, gval is constraint by the past optimal g
+            costbound = (gval-1, float('inf'), float('inf')) # hval is not constraint, gval is constraint by the past optimal g
             new_sol = se.search(timebound-time, costbound)
             new_gval = new_sol.gval
             if new_gval < gval:
