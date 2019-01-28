@@ -209,51 +209,6 @@ def anytime_weighted_astar(initial_state, heur_fn, weight=1., timebound = 10):
     '''OUTPUT: A goal state (if a goal is found), else False'''
     '''implementation of weighted astar algorithm'''
     tic = os.times()[0]
-    time, weight = 0, 0
-    iter = 0
-
-    se = SearchEngine('custom', 'full') # astar data structure to store the frontier, with full cycle checking
-    se.init_search(initial_state, goal_fn=sokoban_goal_state, heur_fn=heur_alternate, fval_function=(lambda sN: fval_function(sN, weight)))
-
-    try:
-        # Initiate the search results with the basic gbf
-        sol = se.search(timebound)
-        gval = sol.gval
-    except: # If even the basic one can't find a solution, no need to continue
-        pass
-    time += os.times()[0] - tic
-
-    while time < timebound and weight > 0 and not se.open.empty():
-        tic = os.times()[0]
-        if sol == False: weight += 0.5
-        else: weight -= 0.25
-        try:
-            costbound = (gval, float('inf'), gval + heur_fn(final)) # hval is not constraint, gval is constraint by the past optimal g
-            new_sol = se.search(timebound-time, costbound)
-            new_gval = new_sol.gval
-            if new_gval < gval:
-                sol, gval = new_sol, new_gval
-                sol_weight = weight
-        except:
-            pass
-        time += os.times()[0] - tic
-        iter += 1
-
-    print('Total iterations:', iter, 'sol weight:', weight)
-    return sol
-## End: Anytime Weighter Astar #######################################################################################
-######################################################################################################################
-
-
-######################################################################################################################
-## Start: Anytime Greedy Best First Search ###########################################################################
-def anytime_gbfs(initial_state, heur_fn, timebound = 10):
-    #IMPLEMENT
-    '''Provides an implementation of anytime greedy best-first search, as described in the HW1 handout'''
-    '''INPUT: a sokoban state that represents the start state and a timebound (number of seconds)'''
-    '''OUTPUT: A goal state (if a goal is found), else False'''
-    '''implementation of weighted astar algorithm'''
-    tic = os.times()[0]
     time = 0
 
     se = SearchEngine('best_first', 'full')
@@ -277,6 +232,42 @@ def anytime_gbfs(initial_state, heur_fn, timebound = 10):
                 sol, gval = new_sol, new_gval
         except:
             pass
+        time += os.times()[0] - tic
+
+    return sol
+## End: Anytime Weighter Astar #######################################################################################
+######################################################################################################################
+
+
+######################################################################################################################
+## Start: Anytime Greedy Best First Search ###########################################################################
+def anytime_gbfs(initial_state, heur_fn, timebound = 10):
+    #IMPLEMENT
+    '''Provides an implementation of anytime greedy best-first search, as described in the HW1 handout'''
+    '''INPUT: a sokoban state that represents the start state and a timebound (number of seconds)'''
+    '''OUTPUT: A goal state (if a goal is found), else False'''
+    '''implementation of weighted astar algorithm'''
+    tic = os.times()[0]
+    time = 0
+
+    se = SearchEngine('best_first', 'full')
+    se.init_search(initial_state, goal_fn=sokoban_goal_state, heur_fn=heur_alternate)
+
+    try: # Initiate the search results with the basic gbf
+        sol = se.search(timebound)
+        gval = sol.gval
+    except: # If even the basic one can't find a solution, no need to continue
+        return False
+    time += os.times()[0] - tic
+
+    while time < timebound and not se.open.empty():
+        tic = os.times()[0]
+        try:
+            costbound = (gval-1, float('inf'), float('inf')) # hval is not constraint, gval is constraint by the past optimal g
+            new_sol = se.search(timebound-time, costbound)
+            new_gval = new_sol.gval
+            if new_gval < gval: sol, gval = new_sol, new_gval
+        except: pass
         time += os.times()[0] - tic
 
     return sol

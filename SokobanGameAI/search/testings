@@ -24,6 +24,58 @@ def test_inner_func(a, b):
         return a+b
     print('Result is', inner_func())
 
+def anytime_gbfs(initial_state, heur_fn, timebound = 10):
+    tic = os.times()[0]
+    time = 0
+
+    se = SearchEngine('best_first', 'full')
+    se.init_search(initial_state, goal_fn=sokoban_goal_state, heur_fn=heur_alternate)
+
+    try:
+        # Initiate the search results with the basic gbf
+        sol = se.search(timebound)
+        gval = sol.gval
+    except: # If even the basic one can't find a solution, no need to continue
+        return False
+    time += os.times()[0] - tic
+
+    while time < timebound and not se.open.empty():
+        tic = os.times()[0]
+        try:
+            costbound = (gval-1, float('inf'), float('inf')) # hval is not constraint, gval is constraint by the past optimal g
+            new_sol = se.search(timebound-time, costbound)
+            new_gval = new_sol.gval
+            if new_gval < gval:
+                sol, gval = new_sol, new_gval
+        except:
+            pass
+        time += os.times()[0] - tic
+
+    return sol
+
+
+    time = 0
+    iter, sol_weight = 0, 0
+    gval, sol = float('inf'), False
+
+    se = SearchEngine('custom', 'full')
+    se.init_search(initial_state, goal_fn=sokoban_goal_state, heur_fn=heur_alternate, fval_function=(lambda sN: fval_function(sN, weight)))
+
+    while time < timebound and weight > 0 and not se.open.empty():
+        tic = os.times()[0]
+        new_sol = se.search(timebound - time, (gval-1, float('inf'), gval-1 + heur_fn(sol)))
+        if new_sol == False:
+            weight *= 2
+        else:
+            new_gval = new_sol.gval
+            sol, gval = new_sol, new_gval
+            sol_weight = weight
+            weight *= 0.75
+        time += os.times()[0] - tic
+        iter += 1
+
+    print('Total iterations:', iter, 'sol weight:', sol_weight)
+    return sol
 
 if __name__ == '__main__':
     main()
