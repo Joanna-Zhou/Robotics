@@ -3,68 +3,67 @@ from search import * #for search engines
 from sokoban import SokobanState, Direction, PROBLEMS #for Sokoban specific classes and problems
 
 def main():
-    ss = SokobanState("START", 0, None, 6, 6, # dimensions
-                 ((5, 5), (5, 4), (4, 0)), #robots
-                 frozenset(((3, 1), (2, 2), (1, 4), (3, 4))), #boxes
-                 frozenset(((0, 1), (0, 0), (1, 0), (1, 1))), #storage
-                 frozenset() #obstacles
+    ss = SokobanState("START", 0, None, 5, 5, # dimensions
+                 ((2, 1), (2, 3)), #robots
+                 frozenset(((4, 0), (4, 2), (3, 1), (3, 3))), #boxes
+                 frozenset(((0, 0), (0, 4), (4, 0), (4, 4))), #storage
+                 frozenset(((1, 0), (2, 0), (3, 0), (1, 4), (2, 4), (3, 4))) #obstacles
                  )
     ss.print_state()
     print(heur_alternate(ss))
+    # print(is_horizontal_adjacent(list(ss.boxes)[0], list(ss.boxes)[1]))
     return
 
 
 ##Temporary storage
-# def anytime_gbfs(initial_state, heur_fn, timebound = 10):
-# #IMPLEMENT
-#   '''Provides an implementation of anytime greedy best-first search, as described in the HW1 handout'''
-#   '''INPUT: a sokoban state that represents the start state and a timebound (number of seconds)'''
-#   '''OUTPUT: A goal state (if a goal is found), else False'''
-#   '''implementation of weighted astar algorithm'''
-#     best_path_cost = float("inf")
-#     time_remain = 8
-#     iter = 0
-#
-#     se = SearchEngine('best_first', 'full')
-#     se.init_search(initial_state, sokoban_goal_state, heur_fn)
-#
-#     while (time_remain > 0) and not se.open.empty():
-#         iter += 1
-#         t_start = os.times()[0]
-#         print(t_start)
-#
-#         if iter == 1:
-#             final = se.search(timebound)
-#
-#             try:
-#                 goalval = final.gval
-#                 time_remain = 8 - t_start
-#                 if goalval < best_path_cost:
-#                     best_path_cost = goalval
-#                     optimal_final = final
-#
-#             except: #when final = False
-#                 time_remain = 8 - t_start
-#
-#         else:
-#             costbound = (best_path_cost, float('inf'), float('inf'))
-#             final = se.search(timebound, costbound)
-#
-#             try:
-#                 goalval = final.gval
-#                 time_remain = 8 - t_start
-#                 if goalval < best_path_cost:
-#                     best_path_cost = goalval
-#                     optimal_final = final
-#
-#             except: #when final = False
-#               time_remain = 8 - t_start
-#
-#     try:
-#         return optimal_final
-#     except:
-#         return final
+def test_inner_func(a, b):
+    def inner_func():
+        print('a is', a, 'b is', b)
+        return a+b
+    print('Result is', inner_func())
 
+def anytime_weighted_astar(initial_state, heur_fn, weight=1., timebound = 10):
+#IMPLEMENT
+    '''Provides an implementation of anytime weighted a-star, as described in the HW1 handout'''
+    '''INPUT: a sokoban state that represents the start state and a timebound (number of seconds)'''
+    '''OUTPUT: A goal state (if a goal is found), else False'''
+    '''implementation of weighted astar algorithm'''
+    tic = os.times()[0]
+    time, weight = 0, 2.1
+    iter = 0
+
+    se = SearchEngine('astar', 'full') # astar data structure to store the frontier, with full cycle checking
+    se.init_search(initial_state, goal_fn=sokoban_goal_state, heur_fn=heur_alternate, fval_function=(lambda sN: fval_function(sN, weight)))
+
+    try:
+        # Initiate the search results with the basic gbf
+        final = se.search(timebound)
+        gval = final.gval
+    except: # If even the basic one can't find a solution, no need to continue
+        final = False
+    time += os.times()[0] - tic
+
+    while time < timebound and weight > 0 and not se.open.empty():
+        tic = os.times()[0]
+        if final == False:
+            weight *= 2
+        else:
+            weight /= 4
+        try:
+            costbound = (gval, float('inf'), float('inf')) # hval is not constraint, gval is constraint by the past optimal g
+            new_final = se.search(timebound, costbound)
+            new_gval = new_final.gval
+            if new_gval < gval:
+                final, gval = new_final, new_gval
+                final_weight = weight
+        except:
+            pass
+        time += os.times()[0] - tic
+        iter += 1
+
+    print('Total iterations:', iter, 'Final weight:', weight)
+    return final
 
 if __name__ == '__main__':
     main()
+    # test_inner_func(1, 2)

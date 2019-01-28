@@ -365,7 +365,8 @@ class SearchEngine:
         if goal_node:
             total_search_time = os.times()[0] - self.search_start_time
             #print("Solution Found with cost of {} in search time of {} sec".format(goal_node.gval, total_search_time))
-            # print("Nodes expanded = {}, states generated = {}, states cycle check pruned = {}, states cost bound pruned = {}".format(sNode.n, StateSpace.n, self.cycle_check_pruned, self.cost_bound_pruned))
+            #print("Nodes expanded = {}, states generated = {}, states cycle check pruned = {}, states cost bound pruned = {}".format(
+            #    sNode.n, StateSpace.n, self.cycle_check_pruned, self.cost_bound_pruned))
             return goal_node.state
         else:
             #exited the while without finding goal---search failed

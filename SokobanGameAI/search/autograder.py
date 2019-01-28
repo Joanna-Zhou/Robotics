@@ -6,9 +6,9 @@ from sokoban import sokoban_goal_state
 #Select what to test
 test_manhattan = False
 test_fval_function = False
-test_anytime_gbfs = True
-test_alternate = False
-test_anytime_weighted_astar = False
+test_anytime_gbfs = False
+test_alternate = [True, False][1]
+test_anytime_weighted_astar = [True, False][0]
 
 if test_manhattan:
     ##############################################################
@@ -52,7 +52,7 @@ if test_alternate:
 
   solved = 0; unsolved = []; benchmark = 12; timebound = 8 #time limit
   output = [20, 14, 5, 11, 29, 14, 12, 6, 13, 22, -99, -99, 18, 22, 41, 18, 16, 14, -99, -99, 42, -99, 38, -99, -99, 33, 43, 29, 37, 28, -99, -99, -99, 91, -99, -99, -99, -99, -99, -99]
-  for i in range(0, len(PROBLEMS)):
+  for i in range(0, len(PROBLEMS)): # len(PROBLEMS)
 
     print("*************************************")
     print("PROBLEM {}".format(i))
@@ -63,7 +63,7 @@ if test_alternate:
     final = se.search(timebound)
 
     if final:
-      #final.print_path()
+      final.print_path()
       solved += 1
     else:
       unsolved.append(i)
