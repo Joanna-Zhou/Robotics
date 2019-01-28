@@ -155,32 +155,22 @@ def is_deadlock(state, boxes, storages):
         box_combinations = itertools.combinations(range(len(boxes)), 2)
         # Case 1: two boxes along a wall (doesn't apply to cases when there's onlt one box left)
         for (i1, i2) in box_combinations:
-            if is_horizontal_adjacent(boxes[i1], boxes[i2]) and boxes[i1][1] in boundary_indices['horizontal']:
-                print(boxes[i1], boxes[i2], 'are adjacent to each other and wall.')
-                return True
-            if is_vertical_adjacent(boxes[i1], boxes[i2]) and boxes[i1][0] in boundary_indices['vertical']:
-                print(boxes[i1], boxes[i2], 'are adjacent to each other and wall.')
-                return True
+            if is_horizontal_adjacent(boxes[i1], boxes[i2]) and boxes[i1][1] in boundary_indices['horizontal']: return True
+            if is_vertical_adjacent(boxes[i1], boxes[i2]) and boxes[i1][0] in boundary_indices['vertical']: return True
 
     ## Case 2: a box is in a corner
     for box in boxes:
-        if box[0] in boundary_indices['vertical'] and box[1] in boundary_indices['horizontal']:
-            print('Box in corner:', box)
-            return True
+        if box[0] in boundary_indices['vertical'] and box[1] in boundary_indices['horizontal']: return True
 
     ### Case 3: a box is by the wall but there's no storage alone that wall
     for wall in boundary_indices['horizontal']:
         num_box_along_wall = sum([box[1] == wall for box in boxes])
         num_storage_along_wall = sum([storage[1] == wall for storage in storages])
-        if num_box_along_wall > num_storage_along_wall:
-            print('Box along wall without storage:')
-            return True
+        if num_box_along_wall > num_storage_along_wall: return True
     for wall in boundary_indices['vertical']:
         num_box_along_wall = sum([box[0] == wall for box in boxes])
         num_storage_along_wall = sum([storage[0] == wall for storage in storages])
-        if num_box_along_wall > num_storage_along_wall:
-            print('Box along wall without storage:')
-            return True
+        if num_box_along_wall > num_storage_along_wall: return True
     return False
 ## End: Alternate Heuristics and its Helpers #########################################################################
 ######################################################################################################################
@@ -219,7 +209,7 @@ def anytime_weighted_astar(initial_state, heur_fn, weight=1., timebound = 10):
     '''OUTPUT: A goal state (if a goal is found), else False'''
     '''implementation of weighted astar algorithm'''
     tic = os.times()[0]
-    time, weight = 0, 2.1
+    time, weight = 0, 0
     iter = 0
 
     se = SearchEngine('custom', 'full') # astar data structure to store the frontier, with full cycle checking
@@ -235,10 +225,8 @@ def anytime_weighted_astar(initial_state, heur_fn, weight=1., timebound = 10):
 
     while time < timebound and weight > 0 and not se.open.empty():
         tic = os.times()[0]
-        if sol == False:
-            weight *= 2
-        else:
-            weight /= 4
+        if sol == False: weight += 0.5
+        else: weight -= 0.25
         try:
             costbound = (gval, float('inf'), gval + heur_fn(final)) # hval is not constraint, gval is constraint by the past optimal g
             new_sol = se.search(timebound-time, costbound)

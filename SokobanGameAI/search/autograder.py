@@ -6,9 +6,9 @@ from sokoban import sokoban_goal_state
 #Select what to test
 test_manhattan = False
 test_fval_function = False
-test_anytime_gbfs = [True, False][1]
+test_anytime_gbfs = [True, False][0]
 test_alternate = [True, False][1]
-test_anytime_weighted_astar = [True, False][0]
+test_anytime_weighted_astar = [True, False][1]
 
 if test_manhattan:
     ##############################################################
