@@ -11,6 +11,8 @@ def main():
                  )
     ss.print_state()
     print(heur_alternate(ss))
+    get_astar_distances(ss)
+
     # print(is_horizontal_adjacent(list(ss.boxes)[0], list(ss.boxes)[1]))
     return
 
@@ -22,48 +24,6 @@ def test_inner_func(a, b):
         return a+b
     print('Result is', inner_func())
 
-# # robot_distance = sum([robot_beside_nothing(state, robot) for robot in state.robots])
-# # Get the total manhattan distance of each robot to its nearest box
-# robot_distance = 0
-# for robot in state.robots: # For each box, find its nearest storage location, which can be reused for other boxes
-#     distances = [manhattan_distance(storage, robot) for storage in storages]
-#     robot_distance += min(distances)
-def robot_beside_nothing(state, robot_position):
-    cost = 0
-    if (robot_position[0]+1, robot_position[1])  in state.boxes:
-        test = (robot_position[0]+2, robot_position[1]) in state.boxes
-        if test in state.boxes or test in state.obstacles:
-            cost+= 2
-        else:
-            return cost
-    if (robot_position[0]-1, robot_position[1])  in state.boxes:
-        test = (robot_position[0]-2, robot_position[1]) in state.boxes
-        if test in state.boxes or test in state.obstacles:
-            cost+= 2
-        else:
-            return cost
-    if (robot_position[0], robot_position[1]+1)  in state.boxes:
-        test = (robot_position[0], robot_position[1]+2) in state.boxes
-        if test in state.boxes or test in state.obstacles:
-            cost+= 2
-        else:
-            return cost
-    if (robot_position[0], robot_position[1]-1)  in state.boxes:
-        test = (robot_position[0], robot_position[1]-2) in state.boxes
-        if test in state.boxes or test in state.obstacles:
-            cost+= 2
-        else:
-            return cost
-    cost+=1
-    if (robot_position[0]+1, robot_position[1]+1)  in state.boxes:
-        return cost
-    if (robot_position[0]-1, robot_position[1]-1)  in state.boxes:
-        return cost
-    if (robot_position[0]-1, robot_position[1]+1)  in state.boxes:
-        return cost
-    if (robot_position[0]+1, robot_position[1]-1)  in state.boxes:
-        return cost
-    return cost+2
 
 if __name__ == '__main__':
     main()

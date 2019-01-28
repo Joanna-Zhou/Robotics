@@ -10,6 +10,9 @@ import os #for time functions
 from search import * #for search engines
 from sokoban import SokobanState, Direction, PROBLEMS #for Sokoban specific classes and problems
 import itertools
+from heapq import *
+
+_DISQUALIFY = 1000
 
 def sokoban_goal_state(state):
   '''
@@ -63,26 +66,26 @@ def heur_alternate(state):
     '''a better heuristic'''
     '''INPUT: a sokoban state'''
     '''OUTPUT: a numeric value that serves as an estimate of the distance of the state to the goal.'''
+    global astar_distances
+    global past_distances
 
     if state == False:
         return float('inf')
 
-    global pass_box_distance
     if state.parent == None: # Initiate the pass_heuristics dictionary when it's the first node expanded
-        pass_box_distance = {}
+        past_distances = {}
+        astar_distances= get_astar_distances(state)
 
     ### Check deadlock
-    boxes, storages = list(state.boxes), list(state.storage)
 
     ### Check if current state is already visited
-    if str(boxes) in pass_box_distance:
-        box_distance = pass_box_distance[str(boxes)]
+    boxes, storages = list(state.boxes), list(state.storage)
+    if str(boxes) in past_distances:
+        box_distance = past_distances[str(boxes)]
     else:
-        robots = list(state.robots)
-        if is_deadlock(state, boxes, storages, robots):
-            state.print_state()
-            pass_box_distance[str(boxes)] = 1000
-            return 1000
+        if is_deadlock(state, boxes, storages):
+            past_distances[str(boxes)] = _DISQUALIFY
+            return _DISQUALIFY
 
         total_distances = []
         size = len(boxes)
@@ -94,17 +97,55 @@ def heur_alternate(state):
             total_distance = 0
             for i in range(0, size):
                 box_index, storage_index = box_indices[i], i # boxes are permutated while storages aren't
-                total_distance += manhattan_distance(boxes[box_index], storages[storage_index])
+                # total_distance += manhattan_distance(boxes[box_index], storages[storage_index])
+                total_distance += astar_distances[boxes[box_index], storages[storage_index]]
             total_distances.append(total_distance)
         box_distance = min(total_distances) # Then find the smallest total distance of all
-        pass_box_distance[str(boxes)] = box_distance
+        past_distances[str(boxes)] = box_distance
     return box_distance
 
 
-def is_deadlock(state, boxes, storages, robots):
+def get_astar_distances(state): # this function should only be run once, at the start node
+    astar_distances = {}
+    for pos in itertools.product(range(state.width), range(state.height)):
+        if not pos in state.obstacles:
+            for storage in state.storage:
+                astar_distances[pos, storage] = astar_distance(pos, storage, state)
+    return astar_distances
+
+
+def astar_distance(pos, storage, state):
+    obstacles, width, height = state.obstacles, state.width, state.height
+    open = [] # heapq structure, storing tuples of (fval, pos)
+    closed = set() # set structure, storing positions only
+    successors = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+
+    gval_dict = {pos: 0}
+    fval_dict = {pos: manhattan_distance(pos, storage)}
+
+    is_dequalified = lambda pos, obstacles, width, height: pos in obstacles or pos[0] < 0 or pos[1] < 0 or pos[0] > width or pos[1] > height
+
+    # astar loop
+    heappush(open, (fval_dict[pos], pos)) # organize the queue in lowest fval order
+    while open != []:
+        curr_fval, curr_pos = heappop(open)
+        if curr_pos == storage:
+            return curr_fval
+        closed.add(curr_pos)
+        for direction in successors:
+            next_pos = (curr_pos[0] + direction[0], curr_pos[1] + direction[1])
+            if next_pos not in closed and not is_dequalified(next_pos, obstacles, width, height):
+                gval_dict[next_pos] = gval_dict[curr_pos] + 1
+                fval_dict[next_pos] = gval_dict[next_pos] + manhattan_distance(next_pos, storage)
+                heappush(open, (fval_dict[next_pos], next_pos))
+
+    return _DISQUALIFY # if simple astar can't find a path from this state to this storage, this state is disqualified
+
+
+def is_deadlock(state, boxes, storages):
     '''Returns a boolean indicating if or not the input state is a deadlock one'''
     '''Note that this only checks the obvious deadlock scenarios to do a rough elimination under a reasonable time'''
-    num_boxes, num_storages, num_robots = len(boxes), len(storages), len(robots)
+    num_boxes, num_storages = len(boxes), len(storages)
     boxes = [box for box in boxes if box not in storages]
     boundary_indices = {'horizontal':[0, state.height-1], 'vertical':[0, state.width-1]}
     # returns if two positions are adjacent in the horizontal/vertical direction'''
@@ -141,8 +182,6 @@ def is_deadlock(state, boxes, storages, robots):
             print('Box along wall without storage:')
             return True
     return False
-
-
 ## End: Alternate Heuristics and its Helpers #########################################################################
 ######################################################################################################################
 
@@ -150,6 +189,7 @@ def is_deadlock(state, boxes, storages, robots):
 def heur_zero(state):
     '''Zero Heuristic can be used to make A* search perform uniform cost search'''
     return 0
+
 
 def fval_function(sN, weight):
 #IMPLEMENT
@@ -170,7 +210,8 @@ def fval_function(sN, weight):
     #You must initialize your search engine object as a 'custom' search engine if you supply a custom fval function.
     return sN.gval + weight * sN.hval
 
-
+######################################################################################################################
+## Start: Anytime Weighter Astar #####################################################################################
 def anytime_weighted_astar(initial_state, heur_fn, weight=1., timebound = 10):
 #IMPLEMENT
     '''Provides an implementation of anytime weighted a-star, as described in the HW1 handout'''
@@ -212,8 +253,12 @@ def anytime_weighted_astar(initial_state, heur_fn, weight=1., timebound = 10):
 
     print('Total iterations:', iter, 'sol weight:', weight)
     return sol
+## End: Anytime Weighter Astar #######################################################################################
+######################################################################################################################
 
 
+######################################################################################################################
+## Start: Anytime Greedy Best First Search ###########################################################################
 def anytime_gbfs(initial_state, heur_fn, timebound = 10):
     #IMPLEMENT
     '''Provides an implementation of anytime greedy best-first search, as described in the HW1 handout'''
@@ -247,3 +292,5 @@ def anytime_gbfs(initial_state, heur_fn, timebound = 10):
         time += os.times()[0] - tic
 
     return sol
+## End: Anytime Greedy Best First Search #############################################################################
+######################################################################################################################
