@@ -95,63 +95,18 @@ def heur_alternate(state):
             total_distances.append(total_distance)
         box_distance = min(total_distances) # Then find the smallest total distance of all
         pass_box_distance[str(boxes)] = box_distance
-
-    robot_distance = sum([robot_beside_nothing(state, robot) for robot in state.robots])
-    # Get the total manhattan distance of each robot to its nearest box
-    # robot_distance = 0
-    # for robot in state.robots: # For each box, find its nearest storage location, which can be reused for other boxes
-    #     distances = [manhattan_distance(storage, robot) for storage in storages]
-    #     robot_distance += min(distances)
-    return box_distance + robot_distance
-
-def robot_beside_nothing(state, robot_position):
-    cost = 0
-    if (robot_position[0]+1, robot_position[1])  in state.boxes:
-        test = (robot_position[0]+2, robot_position[1]) in state.boxes
-        if test in state.boxes or test in state.obstacles:
-            cost+= 2
-        else:
-            return cost
-    if (robot_position[0]-1, robot_position[1])  in state.boxes:
-        test = (robot_position[0]-2, robot_position[1]) in state.boxes
-        if test in state.boxes or test in state.obstacles:
-            cost+= 2
-        else:
-            return cost
-    if (robot_position[0], robot_position[1]+1)  in state.boxes:
-        test = (robot_position[0], robot_position[1]+2) in state.boxes
-        if test in state.boxes or test in state.obstacles:
-            cost+= 2
-        else:
-            return cost
-    if (robot_position[0], robot_position[1]-1)  in state.boxes:
-        test = (robot_position[0], robot_position[1]-2) in state.boxes
-        if test in state.boxes or test in state.obstacles:
-            cost+= 2
-        else:
-            return cost
-    cost+=1
-    if (robot_position[0]+1, robot_position[1]+1)  in state.boxes:
-        return cost
-    if (robot_position[0]-1, robot_position[1]-1)  in state.boxes:
-        return cost
-    if (robot_position[0]-1, robot_position[1]+1)  in state.boxes:
-        return cost
-    if (robot_position[0]+1, robot_position[1]-1)  in state.boxes:
-        return cost
-    return cost+2
+    return box_distance
 
 
 def is_deadlock(state, boxes, storages, robots):
     '''Returns a boolean indicating if or not the input state is a deadlock one'''
     '''Note that this only checks the obvious deadlock scenarios to do a rough elimination under a reasonable time'''
     num_boxes, num_storages, num_robots = len(boxes), len(storages), len(robots)
-    # to_be_removed = [box for box in boxes if box in storages]
-    # boxes -= to_be_removed
     boxes = [box for box in boxes if box not in storages]
-    print(boxes, storages)
-
     boundary_indices = {'horizontal':[0, state.height-1], 'vertical':[0, state.width-1]}
+    # returns if two positions are adjacent in the horizontal/vertical direction'''
+    is_horizontal_adjacent = lambda pos1, pos2: (pos1[1] == pos2[1] and abs(pos1[0] - pos2[0]) <= 1)
+    is_vertical_adjacent = lambda pos1, pos2: (pos1[0] == pos2[0] and abs(pos1[1] - pos2[1]) <= 1)
     if len(boxes) > 1:
         box_combinations = itertools.combinations(range(len(boxes)), 2)
         # Case 1: two boxes along a wall (doesn't apply to cases when there's onlt one box left)
@@ -184,13 +139,6 @@ def is_deadlock(state, boxes, storages, robots):
             return True
     return False
 
-def is_horizontal_adjacent(pos1, pos2):
-    '''returns if two positions are adjacent in the horizontal direction'''
-    return (pos1[1] == pos2[1] and abs(pos1[0] - pos2[0]) <= 1)
-
-def is_vertical_adjacent(pos1, pos2):
-    '''returns if two positions are adjacent in the vertical direction'''
-    return (pos1[0] == pos2[0] and abs(pos1[1] - pos2[1]) <= 1)
 
 ## End: Alternate Heuristics and its Helpers #########################################################################
 ######################################################################################################################
@@ -230,7 +178,7 @@ def anytime_weighted_astar(initial_state, heur_fn, weight=1., timebound = 10):
     time, weight = 0, 2.1
     iter = 0
 
-    se = SearchEngine('astar', 'full') # astar data structure to store the frontier, with full cycle checking
+    se = SearchEngine('custom', 'full') # astar data structure to store the frontier, with full cycle checking
     se.init_search(initial_state, goal_fn=sokoban_goal_state, heur_fn=heur_alternate, fval_function=(lambda sN: fval_function(sN, weight)))
 
     try:
@@ -294,6 +242,5 @@ def anytime_gbfs(initial_state, heur_fn, timebound = 10):
         except:
             pass
         time += os.times()[0] - tic
-        iter += 1
 
     return sol

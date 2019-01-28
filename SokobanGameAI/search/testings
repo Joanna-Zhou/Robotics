@@ -22,47 +22,48 @@ def test_inner_func(a, b):
         return a+b
     print('Result is', inner_func())
 
-def anytime_weighted_astar(initial_state, heur_fn, weight=1., timebound = 10):
-#IMPLEMENT
-    '''Provides an implementation of anytime weighted a-star, as described in the HW1 handout'''
-    '''INPUT: a sokoban state that represents the start state and a timebound (number of seconds)'''
-    '''OUTPUT: A goal state (if a goal is found), else False'''
-    '''implementation of weighted astar algorithm'''
-    tic = os.times()[0]
-    time, weight = 0, 2.1
-    iter = 0
-
-    se = SearchEngine('astar', 'full') # astar data structure to store the frontier, with full cycle checking
-    se.init_search(initial_state, goal_fn=sokoban_goal_state, heur_fn=heur_alternate, fval_function=(lambda sN: fval_function(sN, weight)))
-
-    try:
-        # Initiate the search results with the basic gbf
-        final = se.search(timebound)
-        gval = final.gval
-    except: # If even the basic one can't find a solution, no need to continue
-        final = False
-    time += os.times()[0] - tic
-
-    while time < timebound and weight > 0 and not se.open.empty():
-        tic = os.times()[0]
-        if final == False:
-            weight *= 2
+# # robot_distance = sum([robot_beside_nothing(state, robot) for robot in state.robots])
+# # Get the total manhattan distance of each robot to its nearest box
+# robot_distance = 0
+# for robot in state.robots: # For each box, find its nearest storage location, which can be reused for other boxes
+#     distances = [manhattan_distance(storage, robot) for storage in storages]
+#     robot_distance += min(distances)
+def robot_beside_nothing(state, robot_position):
+    cost = 0
+    if (robot_position[0]+1, robot_position[1])  in state.boxes:
+        test = (robot_position[0]+2, robot_position[1]) in state.boxes
+        if test in state.boxes or test in state.obstacles:
+            cost+= 2
         else:
-            weight /= 4
-        try:
-            costbound = (gval, float('inf'), float('inf')) # hval is not constraint, gval is constraint by the past optimal g
-            new_final = se.search(timebound, costbound)
-            new_gval = new_final.gval
-            if new_gval < gval:
-                final, gval = new_final, new_gval
-                final_weight = weight
-        except:
-            pass
-        time += os.times()[0] - tic
-        iter += 1
-
-    print('Total iterations:', iter, 'Final weight:', weight)
-    return final
+            return cost
+    if (robot_position[0]-1, robot_position[1])  in state.boxes:
+        test = (robot_position[0]-2, robot_position[1]) in state.boxes
+        if test in state.boxes or test in state.obstacles:
+            cost+= 2
+        else:
+            return cost
+    if (robot_position[0], robot_position[1]+1)  in state.boxes:
+        test = (robot_position[0], robot_position[1]+2) in state.boxes
+        if test in state.boxes or test in state.obstacles:
+            cost+= 2
+        else:
+            return cost
+    if (robot_position[0], robot_position[1]-1)  in state.boxes:
+        test = (robot_position[0], robot_position[1]-2) in state.boxes
+        if test in state.boxes or test in state.obstacles:
+            cost+= 2
+        else:
+            return cost
+    cost+=1
+    if (robot_position[0]+1, robot_position[1]+1)  in state.boxes:
+        return cost
+    if (robot_position[0]-1, robot_position[1]-1)  in state.boxes:
+        return cost
+    if (robot_position[0]-1, robot_position[1]+1)  in state.boxes:
+        return cost
+    if (robot_position[0]+1, robot_position[1]-1)  in state.boxes:
+        return cost
+    return cost+2
 
 if __name__ == '__main__':
     main()
