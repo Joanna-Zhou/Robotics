@@ -20,6 +20,7 @@ from util import manhattanDistance  # noqa
 
 _HIGH = 1000000
 _LOW = -1000000
+_DIRECTIONS = [(0, 1), (1, 0), (0, -1), (-1, 0)]
 
 class ReflexAgent(Agent):
     """
@@ -75,18 +76,39 @@ class ReflexAgent(Agent):
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
         "*** YOUR CODE HERE ***"
-        global distanceDict
-        global initialFoodList
+        "If no food left, winning, so go with this option"
+        newFoodPos = newFood.asList()
+        newFoodNum = len(newFoodPos)
+        if newFoodNum == 0: return _HIGH
 
-        try:
-            FoodlList = initialFoodList #get the inistial fool positions to loop through
-        except:
-            print('Recording initial positions of food...')
+        "If ghost is adjacent or at the same next grid, abandon this option"
+        ghostDistances = []
+        for ghostState in newGhostStates:
+            if ghostState.scaredTimer == 0:
+                ghostDistance = manhattanDistance(ghostState.getPosition(), newPos)
+                if ghostDistance <= 1: return _LOW
+                else: ghostDistances.append(ghostDistance)
 
+        "Prefer smaller distance to closest food & smaller total amount of fruit left"
+        foodDistances = []
+        for foodPos in newFoodPos:
+            foodDistances.append(manhattanDistance(foodPos, newPos))
+        newScore = -(min(foodDistances)+50*newFoodNum)
+        if newFoodNum > 1: # More than one food left
+            foodDistances.remove(min(foodDistances))
+            newScore -= min(foodDistances)/2
 
-        newNumFood = successorGameState.getNumFood()
+        "Punish for entering a corner that doesn't contain food"
+        wallNum = 0
+        for direction in _DIRECTIONS:
+            if successorGameState.hasWall(newPos[0]+direction[0], newPos[1]+direction[1]) and not successorGameState.hasFood(newPos[0]+direction[0], newPos[1]+direction[1]):
+                wallNum += 1
+        if wallNum >= 3: newScore += _LOW/2
 
-        return successorGameState.getScore()
+        "Break the tie between two states by prefering larger distance to the closest ghost"
+        newScore += random.random()*(sum(ghostDistances)+0.01)/min(foodDistances)
+        return newScore #successorGameState.getScore()
+
 
 
 def scoreEvaluationFunction(currentGameState):
