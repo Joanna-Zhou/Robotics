@@ -13,6 +13,7 @@
 
 
 import random
+import functools
 
 import util
 from game import Agent, Directions  # noqa
@@ -20,6 +21,7 @@ from util import manhattanDistance  # noqa
 
 _HIGH = 1000000
 _LOW = -1000000
+_INF = float('inf')
 _DIRECTIONS = [(0, 1), (1, 0), (0, -1), (-1, 0)]
 
 class ReflexAgent(Agent):
@@ -166,7 +168,40 @@ class MinimaxAgent(MultiAgentSearchAgent):
             Returns the total number of agents in the game
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        def getMinimaxVal(state, depth):
+            "Terminal reached or depth reached the search depth allowed"
+            if state.isWin() or state.isLose() or depth == self.depth * state.getNumAgents():
+                return self.evaluationFunction(state)
+
+            "Pacman: index = 0, Ghosts: index > 0"
+            agentIndex = depth % state.getNumAgents()
+            actions = state.getLegalActions(agentIndex)
+
+            "Pacman/Ghost's move, find max/max"
+            if agentIndex == 0: # Pacman
+                bestVal = _LOW
+                for action in actions:
+                    newState = state.generateSuccessor(agentIndex, action)
+                    newVal = getMinimaxVal(newState, depth+1)
+                    bestVal = max(bestVal, newVal)
+                return bestVal
+
+            else: # Ghost
+                bestVal = _HIGH
+                for action in actions:
+                    newState = state.generateSuccessor(agentIndex, action)
+                    newVal = getMinimaxVal(newState, depth+1)
+                    bestVal = min(bestVal, newVal)
+                return bestVal
+
+        "Determind the moves given each move's minimax value"
+        legalMoves = gameState.getLegalActions()
+        scores = [getMinimaxVal(state=gameState.generateSuccessor(0, action), depth=1) for action in legalMoves]
+        bestScore = max(scores)
+        bestIndices = [index for index in range(len(scores)) if scores[index] == bestScore]
+        chosenIndex = random.choice(bestIndices)  # Pick randomly among the best
+        return legalMoves[chosenIndex]
 
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
