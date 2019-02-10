@@ -4,11 +4,11 @@ from solution import *
 from sokoban import sokoban_goal_state
 
 #Select what to test
-test_manhattan = False
-test_fval_function = False
+test_manhattan = True
+test_fval_function = True
 test_anytime_gbfs = [True, False][0]
-test_alternate = [True, False][1]
-test_anytime_weighted_astar = [True, False][1]
+test_alternate = [True, False][0]
+test_anytime_weighted_astar = [True, False][0]
 
 if test_manhattan:
     ##############################################################
@@ -50,7 +50,7 @@ if test_alternate:
   # TEST ALTERNATE HEURISTIC
   print('Testing alternate heuristic with best_first search')
 
-  solved = 0; unsolved = []; benchmark = 12; timebound = 8 #time limit
+  solved = 0; unsolved = []; benchmark = 12; timebound = 5 #time limit
   output = [20, 14, 5, 11, 29, 14, 12, 6, 13, 22, -99, -99, 18, 22, 41, 18, 16, 14, -99, -99, 42, -99, 38, -99, -99, 33, 43, 29, 37, 28, -99, -99, -99, 91, -99, -99, -99, -99, -99, -99]
   for i in range(0, len(PROBLEMS)): # len(PROBLEMS)
 
@@ -114,7 +114,7 @@ if test_anytime_gbfs:
   # TEST ANYTIME GBFS
   print('Testing Anytime GBFS')
 
-  solved = 0; unsolved = []; benchmark = 0; timebound = 8 #8 second time limit
+  solved = 0; unsolved = []; benchmark = 0; timebound = 5 #8 second time limit
   for i in range(0, len(PROBLEMS)):
     print("*************************************")
     print("PROBLEM {}".format(i))
@@ -153,7 +153,7 @@ if test_anytime_weighted_astar:
   # TEST ANYTIME WEIGHTED A STAR
   print('Testing Anytime Weighted A Star')
 
-  solved = 0; unsolved = []; benchmark = 0; timebound = 8 #8 second time limit
+  solved = 0; unsolved = []; benchmark = 0; timebound = 5 #8 second time limit
   for i in range(0, len(PROBLEMS)):
     print("*************************************")
     print("PROBLEM {}".format(i))

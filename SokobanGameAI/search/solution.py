@@ -66,6 +66,7 @@ def heur_alternate(state):
     '''a better heuristic'''
     '''INPUT: a sokoban state'''
     '''OUTPUT: a numeric value that serves as an estimate of the distance of the state to the goal.'''
+    '''Credit: The idea of astar is suggested by Arkady Arkhangorodsky, Engsci 1T9 in Robotics.'''
     global astar_distances
     global past_distances
 
@@ -74,9 +75,7 @@ def heur_alternate(state):
 
     if state.parent == None: # Initiate the pass_heuristics dictionary when it's the first node expanded
         past_distances = {}
-        astar_distances= get_astar_distances(state)
-
-    ### Check deadlock
+        astar_distances= get_astar_distances(state) # See "Credit" in the comments above
 
     ### Check if current state is already visited
     boxes, storages = list(state.boxes), list(state.storage)
@@ -90,9 +89,7 @@ def heur_alternate(state):
         total_distances = []
         size = len(boxes)
         box_permutations = itertools.permutations(range(size), size)
-        # Get a permutation of the orders each box can be paired with storages
-        # Loop through them to find all the possible total distances
-        # This way, each box will be only paired with one storage for the sol value
+        # Get a permutation of the orders each box can be paired with storages and loop through them to find all the possible total distances
         for box_indices in box_permutations:
             total_distance = 0
             for i in range(0, size):
@@ -106,9 +103,10 @@ def heur_alternate(state):
 
 
 def get_astar_distances(state): # this function should only be run once, at the start node
+    '''Loops through all positions and get the astart distance from then to each storage, as if there's a box in that position'''
     astar_distances = {}
     for pos in itertools.product(range(state.width), range(state.height)):
-        if not pos in state.obstacles:
+        if not pos in state.obstacles: # The box won't be on top of an obstacle
             for storage in state.storage:
                 astar_distances[pos, storage] = astar_distance(pos, storage, state)
     return astar_distances
@@ -145,6 +143,7 @@ def astar_distance(pos, storage, state):
 def is_deadlock(state, boxes, storages):
     '''Returns a boolean indicating if or not the input state is a deadlock one'''
     '''Note that this only checks the obvious deadlock scenarios to do a rough elimination under a reasonable time'''
+    '''Credit: I used http://www.sokobano.de/wiki/index.php?title=Deadlocks as a reference of deadlock cases'''
     num_boxes, num_storages = len(boxes), len(storages)
     boxes = [box for box in boxes if box not in storages]
     boundary_indices = {'horizontal':[0, state.height-1], 'vertical':[0, state.width-1]}

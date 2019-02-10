@@ -1,39 +1,14 @@
 /** WRITE YOUR TIPS IN THIS FILE **/
-1. You need to made a 3d matrix which the dimension is storage number x state height x state width, which is only made once for each sokoban problem.  This will save a lot of time.
-
-2. Use a BFS algorithm that start from one storage coordinate and with each move the cost add one, the cost is put into the storage's corresponding matrix entry.  Then repeat for each matrix.
-
-3. I used the matrix to calculate the cost between each space to storage and the coordinate in the state with obstacles are set to a really large number in the matrix, but the storage(which is the start point) is set to a large number too, so we won't go back to storage which would result in a loop when using BFS.
-
-4. After the matrix is made, with each call to the heristic function, we only loop through the box the find the right storage(if there is restrictions), then go to that storage's 2d matrix from the 3d matrix, to find the box's cost.
-
-5. Need to watch out for the storage when looping through the box.  When the box is on a storage, the box's cost is the number we set for storage, which is really large.  Because we are looping through storage in the for loop for box to find the minimum cost, if a cost we find for the box is equal to the number we set for the storage, the box is at destination, in that case, we would set the current cost to 0.
-
-1.We have all of the information we need. Manahttan let's us simplify things by considering a case where
-a storage may store more than one box satisfying its own restriction. ie a storage can only store boxes with
-certrain labels. Hence, consider the three information only: box location, storage location and restriction.
+1. Be clear that the goal of the game is to get each box in one storage, so the heuristics' focus is on the boxes. The positions of robots could indeed affect the path and optimality, but given a time constraint, I would say prioritize finding a good heuristics for the boxes.
 
 
+2. Instead of using Manhattan or any other distance "assuming there's no obstacle in between" and then count in the obstacles' impact later, I would suggest calculating the distances with the obstacles included in the first place. One way to do this is use the shortest path from the box to a storage given by A* as the distance. 
 
 
-2.Using the three information from above, find all the possible moves each box can make to be stored in its own
-proper storage space.
+3. For improving time complexity, it is very useful to trade off some space complexity and store information that are reusable. For example, when starting the game (i.e. the node has no parents or the action is "start"), you can calculate all the distances from each position (that the box can possibly be in) to each storage, and store them in a global dictionary, so that you can simply index the dictionary for the distance later.
 
-3.To figure out where each box is able to be stored due to restriction, we may store the box_labels into a different
-array and use them later to see if any restriction was imposed. If not, we may store the boxes anywhere we like.
 
-4.To minimize the cost, geometrically this will become equivalent to using the storage space where the L2 norm, 
-or the distance to that box to the storage space of interest is minimal. This is simple pythagorus.
+4. Storing past values in a global variable can also be used for past heuristics, since many states are already visited in prior iterations. When looking for the heuristic of a state, if the boxes' positions are the same as a previous state, the heuristic value extracted from the global variable can be directly reused; if they haven't shown up before, their corresponding heuristics will need to be calculated and than stored.
 
-5.Utlize this the information by considering exactly which box was moved to which storage space giving the minimal
-by using a loop and terminate by adding all the |delta(x)| and |delta(y)| distance giving the Manhattan.
 
-1. The first step in developing a good sokoban heuristic is to recognise where all the obstacles are in an given state. You want to store/keep track of where the obstacles are in some way early in your heuristic function.
-
-2. You need to be able to test whether or not a box is in a corner that is not a storage point. The reason for this being that when a box ends up in a corner, it cannot be moved again. Hence, if the box is in a corner and that corner is not a storage point, you should immediately set your heuristic function to unsolvable and move on to the next step in the search tree.
-
-3. In addition to calculating the Manhattan distance between boxes and storage points, you should also calculate the Manhattan distance between boxes and the robot. This is necessary to a good heuristic, because the position of the robot greatly affects the optimal solution to any state.
-
-4. You should only look at the distance between one box and one storage point/one robot at a time. Do not try to calculate distances between multiple items.
-
-5. Make sure to base your heuristic on simple/minimal distance calculations in certain scenarios. Do not add unnecessary and complex computation, such as the Hungarian Algorithm, to your heuristic. This will only add complexity/time to your sokoban solver, meaning even simple puzzles could require a lot of processing time to solve.
+5. In order to avoid the problem of having multiple boxes in a storage yet keep the heuristic admissible, you could get the permutations of the boxes' orders. Then, by looping through each permutation and pairing up storages and boxes in such specified orders, you will get the total distance for every possible combination and boxes and storages, where the minimum total distance will be returned as the optimal (and therefore admissible).

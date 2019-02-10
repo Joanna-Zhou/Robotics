@@ -25,33 +25,7 @@ def test_inner_func(a, b):
     print('Result is', inner_func())
 
 def anytime_gbfs(initial_state, heur_fn, timebound = 10):
-    tic = os.times()[0]
-    time = 0
 
-    se = SearchEngine('best_first', 'full')
-    se.init_search(initial_state, goal_fn=sokoban_goal_state, heur_fn=heur_alternate)
-
-    try:
-        # Initiate the search results with the basic gbf
-        sol = se.search(timebound)
-        gval = sol.gval
-    except: # If even the basic one can't find a solution, no need to continue
-        return False
-    time += os.times()[0] - tic
-
-    while time < timebound and not se.open.empty():
-        tic = os.times()[0]
-        try:
-            costbound = (gval-1, float('inf'), float('inf')) # hval is not constraint, gval is constraint by the past optimal g
-            new_sol = se.search(timebound-time, costbound)
-            new_gval = new_sol.gval
-            if new_gval < gval:
-                sol, gval = new_sol, new_gval
-        except:
-            pass
-        time += os.times()[0] - tic
-
-    return sol
 
 
     time = 0
