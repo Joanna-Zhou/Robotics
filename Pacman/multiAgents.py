@@ -19,6 +19,8 @@ import util
 from game import Agent, Directions  # noqa
 from util import manhattanDistance  # noqa
 
+import copy # for creating deep copies of alpha and beta
+
 _HIGH = 1000000
 _LOW = -1000000
 _INFINITY = float('inf')
@@ -214,96 +216,56 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
           Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        def getMinimaxVal(state, depth, a=-_INFINITY, b=_INFINITY):
+        def getMinimaxVal(state, depth, ab):
+            "Input list ab is [alpha, beta, beta...]. ab[0] is alpha for pacman and beta's being for each ghost"
             "Terminal reached or depth reached the search depth allowed"
             if state.isWin() or state.isLose() or depth == self.depth * state.getNumAgents():
                 return self.evaluationFunction(state)
 
             "Pacman: index = 0, Ghosts: index > 0"
             agentIndex = depth % state.getNumAgents()
-            actions = state.getLegalActions(agentIndex)
-
             "Pacman/Ghost's move, find max/max"
             if agentIndex == 0: # Pacman
-                bestVal = -_INFINITY
-                for action in actions:
-                    newState = state.generateSuccessor(agentIndex, action)
-                    newVal = getMinimaxVal(newState, depth+1, a, b)
-                    bestVal = max(bestVal, newVal)
-                    if bestVal >= b: return bestVal
-                    a = max(a, bestVal)
-                    # if b <= a: break
-                return bestVal
-
+                return getMaxVal(state, depth, agentIndex, ab)
             else: # Ghost
-                bestVal = _INFINITY
-                for action in actions:
-                    newState = state.generateSuccessor(agentIndex, action)
-                    newVal = getMinimaxVal(newState, depth+1, a, b)
-                    bestVal = min(bestVal, newVal)
-                    if bestVal <= a: return bestVal
-                    b = min(b, bestVal)
-                    # if b <= a: break
-                return bestVal
+                return getMinVal(state, depth, agentIndex, ab)
+
+        def getMaxVal(state, depth, agentIndex, ab):
+            # A deep copy need to created so that the recursive calls won't change the alpha list at parent node
+            localab = copy.deepcopy(ab)
+            bestVal = -_INFINITY
+            for action in state.getLegalActions(agentIndex):
+                newState = state.generateSuccessor(agentIndex, action)
+                newVal = getMinimaxVal(newState, depth+1, localab)
+                bestVal = max(bestVal, newVal)
+                if bestVal >= min(localab[1:]): # smallest alpha of any ghost
+                    return bestVal
+                localab[0] = max(localab[0], bestVal)
+            return bestVal
+
+        def getMinVal(state, depth, agentIndex, ab):
+            localab = copy.deepcopy(ab)
+            bestVal = _INFINITY
+            for action in state.getLegalActions(agentIndex):
+                newState = state.generateSuccessor(agentIndex, action)
+                newVal = getMinimaxVal(newState, depth+1, localab)
+                bestVal = min(bestVal, newVal)
+                if bestVal <= localab[0]:
+                    return bestVal
+                localab[agentIndex] = min(localab[agentIndex], bestVal)
+            return bestVal
 
         "Determind the moves given each move's minimax value"
-        legalMoves = gameState.getLegalActions()
-        scores = [getMinimaxVal(state=gameState.generateSuccessor(0, action), depth=1) for action in legalMoves]
-        bestScore = max(scores)
-        bestIndices = [index for index in range(len(scores)) if scores[index] == bestScore]
-        chosenIndex = random.choice(bestIndices)  # Pick randomly among the best
-        return legalMoves[chosenIndex]
+        bestScore, bestAction = -_INFINITY, None
+        ab = [-_INFINITY] + [_INFINITY for i in range(1, gameState.getNumAgents())]
+        for action in gameState.getLegalActions(0):
+            score = getMinimaxVal(gameState.generateSuccessor(0, action), 1, ab)
+            if score > bestScore:
+                bestScore, bestAction = score, action
+            ab[0] = max(ab[0], bestScore) # Update the alpha of top level (depth = 0)
+        return bestAction
 
-    # def getAction(self, gameState):
-    #     """
-    #       Returns the minimax action using self.depth and self.evaluationFunction
-    #     """
-    #     alphas = [-float('inf')]
-    #     for _ in range(1, gameState.getNumAgents()):
-    #         alphas.append(float('inf'))
-    #
-    #     def findValue(state, depth, alphas):
-    #         if state.isWin() or state.isLose():
-    #             return self.evaluationFunction(state)
-    #         if depth == self.depth*state.getNumAgents():
-    #             return self.evaluationFunction(state)
-    #         if depth % state.getNumAgents() == 0:
-    #             return maxValue(state, depth, depth % state.getNumAgents(), alphas)
-    #         else:
-    #             return minValue(state, depth, depth % state.getNumAgents(), alphas)
-    #
-    #     def maxValue(state, depth, agentIndex, alphas):
-    #         alphas = alphas[:]
-    #         v = -float('inf')
-    #         for action in state.getLegalActions(agentIndex):
-    #             v = max(v, findValue(state.generateSuccessor(agentIndex, action), depth+1, alphas))
-    #             if v > min(alphas[1:]):
-    #         # if v > alphas[agentIndex]:
-    #                 return v
-    #             alphas[agentIndex] = max(alphas[agentIndex], v)
-    #         return v
-    #
-    #     def minValue(state, depth, agentIndex, alphas):
-    #         alphas = alphas[:]
-    #         v = float('inf')
-    #         for action in state.getLegalActions(agentIndex):
-    #             v = min(v, findValue(state.generateSuccessor(agentIndex, action), depth+1, alphas))
-    #             if v < alphas[0]:
-    #                 return v
-    #             alphas[agentIndex] = min(alphas[agentIndex], v)
-    #         return v
-    #
-    #     maxV = -float('inf')
-    #     minimaxAction = 0
-    #     if gameState.isWin() or gameState.isLose():
-    #         return self.evaluationFunction(gameState)
-    #     for action in gameState.getLegalActions(0):
-    #         value = findValue(gameState.generateSuccessor(0, action), 1, alphas)
-    #         if value > maxV:
-    #             minimaxAction = action
-    #             maxV = value
-    #         alphas[0] = max(alphas[0], maxV)
-    #     return minimaxAction
+
 
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
@@ -319,7 +281,49 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
           legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        def getMinimaxVal(state, depth):
+            "Input list ab is [alpha, beta, beta...]. ab[0] is alpha for pacman and beta's being for each ghost"
+            "Terminal reached or depth reached the search depth allowed"
+            if state.isWin() or state.isLose() or depth == self.depth * state.getNumAgents():
+                return self.evaluationFunction(state)
+
+            "Pacman: index = 0, Ghosts: index > 0"
+            agentIndex = depth % state.getNumAgents()
+            "Pacman/Ghost's move, find max/max"
+            if agentIndex == 0: # Pacman
+                return getMaxVal(state, depth, agentIndex)
+            else: # Ghost
+                return getMinVal(state, depth, agentIndex)
+
+        def getMaxVal(state, depth, agentIndex):
+            # A deep copy need to created so that the recursive calls won't change the alpha list at parent node
+            bestVal = -_INFINITY
+            for action in state.getLegalActions(agentIndex):
+                newState = state.generateSuccessor(agentIndex, action)
+                newVal = getMinimaxVal(newState, depth+1)
+                bestVal = max(bestVal, newVal)
+                if bestVal >= min(localab[1:]): # smallest alpha of any ghost
+                    return bestVal
+                localab[0] = max(localab[0], bestVal)
+            return bestVal
+
+        def getMinVal(state, depth, agentIndex):
+            bestVal = _INFINITY
+            for action in state.getLegalActions(agentIndex):
+                newState = state.generateSuccessor(agentIndex, action)
+                newVal = getMinimaxVal(newState, depth+1)
+                bestVal = min(bestVal, newVal)
+                if bestVal <= localab[0]:
+                    return bestVal
+            return bestVal
+
+        "Determind the moves given each move's minimax value"
+        bestScore, bestAction = -_INFINITY, None
+        for action in gameState.getLegalActions(0):
+            score = getMinimaxVal(gameState.generateSuccessor(0, action), 1)
+            if score > bestScore:
+                bestScore, bestAction = score, action
+        return bestAction
 
 
 def betterEvaluationFunction(currentGameState):
