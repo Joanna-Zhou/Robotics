@@ -332,8 +332,16 @@ def betterEvaluationFunction(currentGameState):
       Essentially, the values of given state is evaluated using a linear combination of features, including:
       1. Maximizing current score (the one shown on the GUI)
       2. Minimizing numbers of food and/or capsules left
-      3. Minimizing the distances from Pacman to cloest food(s) and capsule(s)
-      4. Maximizing distance fron Pacman to non-scared ghost (all or closest, to be tuned), and minimizing that of scared ghosts
+      3. Minimizing the distances from Pacman to cloest food(s)
+      4. Maximizing distance fron Pacman to non-scared ghost, and minimizing that of scared ghosts
+
+      The parameters are tuned by testing, however, some basic logics are:
+      *. Pacman needs more incentive to go for capsules/scared ghosts, as they worth a lot more than the food
+      *. They still needs to prioritize finishing the dots as that is the winning criteria.
+      *. Therefore, one way to balance is to try different weights to see the trade offs.
+      *. Another way is to set a cap of minimum distance, outside of which Pacman wouldn't care to chase the scared ghost.
+      *. This other way can also be used for non-scared ghosts, so that Pacman doesn't get too frightened to eat.
+      *. For tie breaking, I used not only the first but also the second closest food's distance with less weight.
     """
     "*** YOUR CODE HERE ***"
     "First check terminal state"
@@ -350,7 +358,7 @@ def betterEvaluationFunction(currentGameState):
     capsulePos = currentGameState.getCapsules()
     capsuleNum = len(capsulePos)
 
-    "3. Distance to closest food and/or capsule - Minimize"
+    "3. Distance to closest food and - Minimize"
     foodDistances = [manhattanDistance(food, pacmanPos) for food in foodPos]
     minFoodDistance = min(foodDistances)
     if minFoodDistance == 0: minFoodDistance = _LOW
@@ -361,36 +369,17 @@ def betterEvaluationFunction(currentGameState):
             minFoodDistance += min(foodDistances)/2
 
     "4. Distance of non-scared ghosts -- Maximize, and that of scared ghosts -- Minimize"
-    # ghostDistances, ghostScaredDistances = [], []
-    # minGhostDistance, minGhostScaredDistance = _INFINITY, 0
-    # for ghostState in currentGameState.getGhostStates():
-    #     ghostDistance = manhattanDistance(ghostState.getPosition(), pacmanPos)
-    #     if ghostState.scaredTimer == 0:
-    #         if ghostDistance <= 1: ghostDistances.append(_LOW)
-    #         else: ghostDistances.append(ghostDistance)
-    #     else:
-    #         ghostScaredDistances.append(ghostDistance)
-    # if ghostDistances: minGhostDistance = min(ghostDistances)
-    # if ghostScaredDistances: minGhostScaredDistance = min(ghostScaredDistances)
-    def _scoreFromGhost(gameState):
-        score = 0
-        for ghost in gameState.getGhostStates():
-            disGhost = manhattanDistance(gameState.getPacmanPosition(), ghost.getPosition())
-            if ghost.scaredTimer > 0:
-                # score += pow(max(8 - disGhost, 0), 2)
-                # score += max(8 - disGhost, 0)
-                score -= min(disGhost-8, 0)
-            else:
-                # score -= pow(max(3 - disGhost, 0), 2)
-                # score -= max(3 - disGhost, 0)
-                score += min(disGhost-3, 0)
-                if disGhost <= 1: score -= _HIGH
-        return score
+    sumGhostDistance = 0
+    for ghost in currentGameState.getGhostStates():
+        ghostDistance = manhattanDistance(ghost.getPosition(), pacmanPos)
+        if ghost.scaredTimer > 0:
+            sumGhostDistance -= min(ghostDistance-8, 0)
+        else:
+            sumGhostDistance += min(ghostDistance-3, 0)
+            if ghostDistance <= 1: sumGhostDistance -= _HIGH
 
-    minGhostDistance = _scoreFromGhost(currentGameState)
-
-    features = [score, foodNum, capsuleNum, 1./minFoodDistance, minGhostDistance]
-    weight   = [    1,     -10,        -20,                 30,                30]
+    features = [score, foodNum, capsuleNum, 1./minFoodDistance, sumGhostDistance]
+    weight   = [    1,     -10,        -20,                 30,               30]
     return sum(f*w for f,w in zip(features, weight)) #+ random.random()/10000
 
 # Abbreviation
