@@ -377,16 +377,20 @@ def betterEvaluationFunction(currentGameState):
         for ghost in gameState.getGhostStates():
             disGhost = manhattanDistance(gameState.getPacmanPosition(), ghost.getPosition())
             if ghost.scaredTimer > 0:
-                score += pow(max(8 - disGhost, 0), 2)
+                # score += pow(max(8 - disGhost, 0), 2)
+                # score += max(8 - disGhost, 0)
+                score -= min(disGhost-8, 0)
             else:
-                score -= pow(max(3 - disGhost, 0), 2)
+                # score -= pow(max(3 - disGhost, 0), 2)
+                # score -= max(3 - disGhost, 0)
+                score += min(disGhost-3, 0)
                 if disGhost <= 1: score -= _HIGH
         return score
 
     minGhostDistance = _scoreFromGhost(currentGameState)
 
     features = [score, foodNum, capsuleNum, 1./minFoodDistance, minGhostDistance]
-    weight   = [    1,     -10,        -20,                 20,                3]
+    weight   = [    1,     -10,        -20,                 30,                30]
     return sum(f*w for f,w in zip(features, weight)) #+ random.random()/10000
 
 # Abbreviation
