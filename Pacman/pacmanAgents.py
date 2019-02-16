@@ -55,6 +55,7 @@ class GreedyAgent(Agent):
         scored = [(self.evaluationFunction(state), action) for state, action in successors]
         bestScore = max(scored)[0]
         bestActions = [pair[1] for pair in scored if pair[0] == bestScore]
+        print('bestActions:', bestActions)
         return random.choice(bestActions)
 
 

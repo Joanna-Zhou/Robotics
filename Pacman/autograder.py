@@ -295,54 +295,57 @@ def evaluate(
     questions = []
     questionDicts = {}
     test_subdirs = getTestSubdirs(testParser, testRoot, questionToGrade)
+    count = 0
     for q in test_subdirs:
-        subdir_path = os.path.join(testRoot, q)
-        if not os.path.isdir(subdir_path) or q[0] == ".":
-            continue
-
-        # create a question object
-        questionDict = testParser.TestParser(os.path.join(subdir_path, "CONFIG")).parse()
-        questionClass = getattr(testClasses, questionDict["class"])
-        question = questionClass(questionDict, display)
-        questionDicts[q] = questionDict
-
-        # load test cases into question
-        tests = [t for t in os.listdir(subdir_path) if re.match(r"[^#~.].*\.test\Z", t)]
-        tests = [re.match(r"(.*)\.test\Z", t).group(1) for t in tests]
-        for t in sorted(tests):
-            test_file = os.path.join(subdir_path, "%s.test" % t)
-            solution_file = os.path.join(subdir_path, "%s.solution" % t)
-            test_out_file = os.path.join(subdir_path, "%s.test_output" % t)
-            testDict = testParser.TestParser(test_file).parse()
-            if testDict.get("disabled", "false").lower() == "true":
+        count += 1
+        if count == 5: ####### Only test q5
+            subdir_path = os.path.join(testRoot, q)
+            if not os.path.isdir(subdir_path) or q[0] == ".":
                 continue
-            testDict["test_out_file"] = test_out_file
-            testClass = getattr(projectTestClasses, testDict["class"])
-            testCase = testClass(question, testDict)
 
-            def makefun(testCase, solution_file):
-                if generateSolutions:
-                    # write solution file to disk
-                    return lambda grades: testCase.writeSolution(moduleDict, solution_file)
-                else:
-                    # read in solution dictionary and pass as an argument
-                    testDict = testParser.TestParser(test_file).parse()
-                    solutionDict = testParser.TestParser(solution_file).parse()
-                    if printTestCase:
-                        return lambda grades: printTest(testDict, solutionDict) or testCase.execute(
-                            grades, moduleDict, solutionDict
-                        )
+            # create a question object
+            questionDict = testParser.TestParser(os.path.join(subdir_path, "CONFIG")).parse()
+            questionClass = getattr(testClasses, questionDict["class"])
+            question = questionClass(questionDict, display)
+            questionDicts[q] = questionDict
+
+            # load test cases into question
+            tests = [t for t in os.listdir(subdir_path) if re.match(r"[^#~.].*\.test\Z", t)]
+            tests = [re.match(r"(.*)\.test\Z", t).group(1) for t in tests]
+            for t in sorted(tests):
+                test_file = os.path.join(subdir_path, "%s.test" % t)
+                solution_file = os.path.join(subdir_path, "%s.solution" % t)
+                test_out_file = os.path.join(subdir_path, "%s.test_output" % t)
+                testDict = testParser.TestParser(test_file).parse()
+                if testDict.get("disabled", "false").lower() == "true":
+                    continue
+                testDict["test_out_file"] = test_out_file
+                testClass = getattr(projectTestClasses, testDict["class"])
+                testCase = testClass(question, testDict)
+
+                def makefun(testCase, solution_file):
+                    if generateSolutions:
+                        # write solution file to disk
+                        return lambda grades: testCase.writeSolution(moduleDict, solution_file)
                     else:
-                        return lambda grades: testCase.execute(grades, moduleDict, solutionDict)
+                        # read in solution dictionary and pass as an argument
+                        testDict = testParser.TestParser(test_file).parse()
+                        solutionDict = testParser.TestParser(solution_file).parse()
+                        if printTestCase:
+                            return lambda grades: printTest(testDict, solutionDict) or testCase.execute(
+                                grades, moduleDict, solutionDict
+                            )
+                        else:
+                            return lambda grades: testCase.execute(grades, moduleDict, solutionDict)
 
-            question.addTestCase(testCase, makefun(testCase, solution_file))
+                question.addTestCase(testCase, makefun(testCase, solution_file))
 
-        # Note extra function is necessary for scoping reasons
-        def makefun(question):
-            return lambda grades: question.execute(grades)
+            # Note extra function is necessary for scoping reasons
+            def makefun(question):
+                return lambda grades: question.execute(grades)
 
-        setattr(sys.modules[__name__], q, makefun(question))
-        questions.append((q, question.getMaxPoints()))
+            setattr(sys.modules[__name__], q, makefun(question))
+            questions.append((q, question.getMaxPoints()))
 
     grades = grading.Grades(
         projectParams.PROJECT_NAME, questions, edxOutput=edxOutput, muteOutput=muteOutput
