@@ -143,7 +143,7 @@ class MultiAgentSearchAgent(Agent):
       is another abstract class.
     """
 
-    def __init__(self, evalFn="scoreEvaluationFunction", depth="2"):
+    def __init__(self, evalFn="betterEvaluationFunction", depth="2"):
         self.index = 0  # Pacman is always agent index 0
         self.evaluationFunction = util.lookup(evalFn, globals())
         self.depth = int(depth)
@@ -319,6 +319,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         scores = [getExpectimaxVal(state=gameState.generateSuccessor(0, action), depth=1) for action in legalMoves]
         bestScore = max(scores)
         bestIndices = [index for index in range(len(scores)) if scores[index] == bestScore]
+        # print('scores:' , scores)
         chosenIndex = random.choice(bestIndices)  # Pick randomly among the best
         return legalMoves[chosenIndex]
 
@@ -363,10 +364,16 @@ def betterEvaluationFunction(currentGameState):
     minFoodDistance = min(foodDistances)
     if minFoodDistance == 0: minFoodDistance = _LOW
     else:
-        if foodNum == 1: minFoodDistance *= 1.49
-        if foodNum > 1:
+        if foodNum == 1: minFoodDistance *= 1.73
+        if foodNum >= 2:
             foodDistances.remove(minFoodDistance)
             minFoodDistance += min(foodDistances)/2
+        # if foodNum >=3:
+        #     foodDistances.remove(minFoodDistance)
+        #     minFoodDistance += min(foodDistances)/2
+        #     foodDistances.remove(min(foodDistances))
+        #     minFoodDistance += min(foodDistances)/4
+
 
     "4. Distance of non-scared ghosts -- Maximize, and that of scared ghosts -- Minimize"
     sumGhostDistance = 0
@@ -379,7 +386,7 @@ def betterEvaluationFunction(currentGameState):
             if ghostDistance <= 1: sumGhostDistance -= _HIGH
 
     features = [score, foodNum, capsuleNum, 1./minFoodDistance, sumGhostDistance]
-    weight   = [    1,     -10,        -20,                 30,               30]
+    weight   = [    1,     -10,        -20,                 30,               40]
     return sum(f*w for f,w in zip(features, weight)) #+ random.random()/10000
 
 # Abbreviation
