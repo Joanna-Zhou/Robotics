@@ -297,8 +297,8 @@ def evaluate(
     test_subdirs = getTestSubdirs(testParser, testRoot, questionToGrade)
     count = 0
     for q in test_subdirs:
-        count += 1
-        if count == 5: ####### Only test q5
+        # count += 1
+        if count != 100: ####### Only test q5
             subdir_path = os.path.join(testRoot, q)
             if not os.path.isdir(subdir_path) or q[0] == ".":
                 continue
