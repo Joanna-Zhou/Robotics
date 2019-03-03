@@ -143,7 +143,7 @@ class MultiAgentSearchAgent(Agent):
       is another abstract class.
     """
 
-    def __init__(self, evalFn="betterEvaluationFunction", depth="2"):
+    def __init__(self, evalFn="scoreEvaluationFunction", depth="2"):
         self.index = 0  # Pacman is always agent index 0
         self.evaluationFunction = util.lookup(evalFn, globals())
         self.depth = int(depth)
@@ -316,7 +316,8 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
 
         "Determind the moves given each move's minimax value"
         legalMoves = gameState.getLegalActions()
-        scores = [getExpectimaxVal(state=gameState.generateSuccessor(0, action), depth=1) for action in legalMoves]
+        sscores = [getExpectimaxVal(state=gameState.generateSuccessor(0, action), depth=1) for action in legalMoves]
+        scores = sscores
         bestScore = max(scores)
         bestIndices = [index for index in range(len(scores)) if scores[index] == bestScore]
         # print('scores:' , scores)
@@ -352,6 +353,7 @@ def betterEvaluationFunction(currentGameState):
     "1. Set base score with the current shown score"
     score = currentGameState.getScore()
     pacmanPos = currentGameState.getPacmanPosition()
+    if currentGameState.hasWall(pacmanPos[0], pacmanPos[1]): return -_INFINITY
 
     "2. Number of food and/or capsule -- Minimize"
     foodPos = currentGameState.getFood().asList()
@@ -384,6 +386,7 @@ def betterEvaluationFunction(currentGameState):
         else:
             sumGhostDistance += min(ghostDistance-3, 0)
             if ghostDistance <= 1: sumGhostDistance -= _HIGH
+
 
     features = [score, foodNum, capsuleNum, 1./minFoodDistance, sumGhostDistance]
     weight   = [    1,     -10,        -20,                 30,               40]

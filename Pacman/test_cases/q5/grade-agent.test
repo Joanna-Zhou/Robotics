@@ -2,7 +2,7 @@ class: "EvalAgentTest"
 
 agentName: "ExpectimaxAgent"
 agentArgs: "evalFn=better"
-layoutName: "contestClassic"
+layoutName: "smallClassic"
 maxTime: "120"
 numGames: "10"
 
