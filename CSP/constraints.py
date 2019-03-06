@@ -278,7 +278,11 @@ class NValuesConstraint(Constraint):
         self._ub = upper_bound
 
     def check(self):
-        util.raiseNotDefined()
+        '''True if the number of values in the required values are within the range of lower and upper bound
+        '''
+        count = sum(1 for val in self.scope() if val in self._required)
+        return self._lb <= count <= self._ub
+
 
     def hasSupport(self, var, val):
         '''check if var=val has an extension to an assignment of the
@@ -288,4 +292,16 @@ class NValuesConstraint(Constraint):
                  a similar approach is applicable here (but of course
                  there are other ways as well)
         '''
-        util.raiseNotDefined()
+        if var not in self.scope():
+            return True
+
+        def valsNotEqual(l):
+            '''tests a list of assignments which are pairs (var,val)
+               to see if they can satisfy the constraint (in the same way was the check function)'''
+            count = sum(1 for (var, val) in l if val in self._required)
+            return self._lb <= count <= self._ub
+
+        varsToAssign = self.scope()
+        varsToAssign.remove(var)
+        x = findvals(varsToAssign, [(var, val)], valsNotEqual)
+        return x

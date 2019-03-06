@@ -1,0 +1,5 @@
+
+requiredvals = [1, 3]
+vals = [1, 3, 4, 5, 6]
+required = [1 for val in vals if val in requiredvals]
+print(required)

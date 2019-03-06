@@ -97,16 +97,16 @@ c6 = csp_problems.ScheduleProblem(
   #courses
   ['CSC108', 'CSC165', 'MAT137'],
   #classes
-  ['CSC108-BA-1-LEC-01', 
-   'CSC108-MP-2-LEC-02', 
+  ['CSC108-BA-1-LEC-01',
+   'CSC108-MP-2-LEC-02',
    'CSC108-SF-4-TUT-01',
-   'CSC165-BA-3-LEC-01', 
-   'CSC165-MP-5-LEC-02', 
-   'CSC165-MP-6-TUT-01', 
+   'CSC165-BA-3-LEC-01',
+   'CSC165-MP-5-LEC-02',
+   'CSC165-MP-6-TUT-01',
    'CSC165-MP-8-TUT-02',
-   'MAT137-SF-7-LEC-01', 
-   'MAT137-BA-5-LEC-02', 
-   'MAT137-SF-10-TUT-01', 
+   'MAT137-SF-7-LEC-01',
+   'MAT137-BA-5-LEC-02',
+   'MAT137-SF-10-TUT-01',
    'MAT137-SF-9-TUT-02'],
   #buildings
   ['BA', 'MP', 'SF'],
@@ -173,10 +173,10 @@ def get_class_info(class_section):
 def check_schedule_solution(problem, schedule):
   if len(schedule) == 0:
     return False
-  tests = [check_valid_classes, 
-           check_consecutive_classes_buildings, check_taken_courses_once, 
+  tests = [check_valid_classes,
+           check_consecutive_classes_buildings, check_taken_courses_once,
            check_resting]
-  
+
   for test in tests:
       if not test(problem, schedule):
         return False
@@ -196,14 +196,14 @@ def check_consecutive_classes_buildings(problem, schedule):
   for i, _ in enumerate(schedule):
     if i + 1 == len(schedule) or schedule[i] == NOCLASS or schedule[i + 1] == NOCLASS:
       continue
-    
+
     building_1 = schedule[i].split('-')[1]
     building_2 = schedule[i + 1].split('-')[1]
     if building_2 not in problem.connected_buildings(building_1):
       print("Error solution invalid, consecutive classes {}, {} in the schedule is too far apart".format(schedule[i], schedule[i + 1]))
       return False
 
-  return True      
+  return True
 
 def check_taken_courses_once(problem, schedule):
   checklist = dict()
@@ -283,6 +283,6 @@ if __name__ == '__main__':
         print("Solution {}.".format(i+1))
         if not check_schedule_solution(ip, s):
             print("ERROR solution is invalid")
-    
+
         print(s)
         print("------------------------------\n")
