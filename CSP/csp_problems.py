@@ -178,8 +178,8 @@ def schedules_csp(sp):
         if courses_session not in courses_sessions:
             courses_sessions.append(courses_session)
 
-    # "Add a number of none classes to ones that have classes"
-    # num_noclass = sp.num_time_slots - len(courses_sessions)
+    "Add a number of none classes to ones that have classes"
+    num_noclass = sp.num_time_slots - len(courses_sessions)
     for i in range(num_noclass):
         classDom.append(NOCLASS+'-'+str(i))
 
