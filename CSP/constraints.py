@@ -280,9 +280,8 @@ class NValuesConstraint(Constraint):
     def check(self):
         '''True if the number of values in the required values are within the range of lower and upper bound
         '''
-        count = sum(1 for val in self.scope() if val in self._required)
+        count = sum(1 for var in self.scope() if var.getValue() in self._required)
         return self._lb <= count <= self._ub
-
 
     def hasSupport(self, var, val):
         '''check if var=val has an extension to an assignment of the
